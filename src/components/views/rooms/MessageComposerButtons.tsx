@@ -77,13 +77,13 @@ const MessageComposerButtons: React.FC<IProps> = (props: IProps) => {
                     onClick={props.onComposerModeClick}
                 />
             ) : (
-                emojiButton(props)
+                voiceRecordingButton(props, narrow)
             ),
         ];
         moreButtons = [
+            emojiButton(props),
             uploadButton(), // props passed via UploadButtonContext
-            showStickersButton(props),
-            voiceRecordingButton(props, narrow),
+            showStickersButton(props),            
             props.showPollsButton ? pollButton(room, props.relation) : null,
             showLocationButton(props, room, matrixClient),
         ];
@@ -98,11 +98,11 @@ const MessageComposerButtons: React.FC<IProps> = (props: IProps) => {
             ) : (
                 emojiButton(props)
             ),
-            uploadButton(), // props passed via UploadButtonContext
+            voiceRecordingButton(props, narrow),
         ];
         moreButtons = [
             showStickersButton(props),
-            voiceRecordingButton(props, narrow),
+            uploadButton(), // props passed via UploadButtonContext            
             props.showPollsButton ? pollButton(room, props.relation) : null,
             showLocationButton(props, room, matrixClient),
         ];
