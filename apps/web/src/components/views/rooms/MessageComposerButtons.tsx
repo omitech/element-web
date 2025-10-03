@@ -85,21 +85,13 @@ const MessageComposerButtons: React.FC<IProps> = (props: IProps) => {
                     onClick={props.onComposerModeClick}
                 />
             ) : (
-                emojiButton(props)
+                voiceRecordingButton(props, narrow)
             ),
         ];
         moreButtons = [
-            // This a textual list of buttons, so we can't use the UploadButton here.
-            roomUploadSnapshot.options.map(({ type, icon: Icon, label }) => (
-                <IconizedContextMenuOption
-                    onClick={() => roomUploadVM.onUploadOptionSelected(type)}
-                    icon={Icon && <Icon />}
-                    label={label}
-                    key={type}
-                />
-            )),
-            showStickersButton(props),
-            voiceRecordingButton(props, narrow),
+            emojiButton(props),
+            uploadButton(), // props passed via UploadButtonContext
+            showStickersButton(props),            
             props.showPollsButton ? pollButton(room, props.relation) : null,
             showLocationButton(props, room, matrixClient),
         ];
@@ -114,11 +106,11 @@ const MessageComposerButtons: React.FC<IProps> = (props: IProps) => {
             ) : (
                 emojiButton(props)
             ),
-            <UploadButton key="upload" vm={roomUploadVM} />,
+            voiceRecordingButton(props, narrow),
         ];
         moreButtons = [
             showStickersButton(props),
-            voiceRecordingButton(props, narrow),
+            uploadButton(), // props passed via UploadButtonContext            
             props.showPollsButton ? pollButton(room, props.relation) : null,
             showLocationButton(props, room, matrixClient),
         ];
