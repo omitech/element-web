@@ -918,6 +918,38 @@ export class UnwrappedEventTile extends React.Component<EventTileProps, IState> 
 
     public render(): ReactNode {
         const msgtype = this.props.mxEvent.getContent().msgtype;
+        // MSC1767 forwarded metadata: if present, show banner before the event body
+        const forwardedMeta = this.props.mxEvent.getContent()["org.matrix.msc1767.forwarded"] as
+            | {
+                  original_sender?: string;
+                  original_event_id?: string;
+                  original_room_id?: string;
+                  forwarded_ts?: number;
+              }
+            | undefined;
+        let forwardedBanner: JSX.Element | undefined;
+        if (forwardedMeta?.original_sender) {
+            const client = MatrixClientPeg.safeGet();
+            const originalSenderMxid = forwardedMeta.original_sender;
+            // First try the current room membership
+            const room = client.getRoom(this.props.mxEvent.getRoomId());
+            let displayName: string | undefined = room?.getMember(originalSenderMxid)?.name;
+            if (!displayName) {
+                // Fallback: try the original room if different
+                if (forwardedMeta.original_room_id && forwardedMeta.original_room_id !== room?.roomId) {
+                    const originRoom = client.getRoom(forwardedMeta.original_room_id);
+                    displayName = originRoom?.getMember(originalSenderMxid)?.name;
+                }
+            }
+            // Final fallback to mxid
+            displayName = displayName || originalSenderMxid;
+            forwardedBanner = (
+                <div className="mx_EventTile_forwardedBanner" aria-label={_t("forward|forwarded_from_aria")}> 
+                    <span className="mx_EventTile_forwardedIcon" aria-hidden="true" />
+                    <span className="mx_EventTile_forwardedLabel">{displayName}</span>
+                </div>
+            );
+        }
         const eventType = this.props.mxEvent.getType();
         const id = uniqueId();
 
@@ -1243,6 +1275,7 @@ export class UnwrappedEventTile extends React.Component<EventTileProps, IState> 
                         <div id={id} className={lineClasses} key="mx_EventTile_line" onContextMenu={this.onContextMenu}>
                             {this.renderContextMenu()}
                             {replyChain}
+                            {forwardedBanner}
                             {renderTile(TimelineRenderingType.Thread, {
                                 ...this.props,
 
@@ -1433,6 +1466,7 @@ export class UnwrappedEventTile extends React.Component<EventTileProps, IState> 
                             {groupTimestamp}
                             {groupPadlock}
                             {replyChain}
+                            {forwardedBanner}
                             {renderTile(this.context.timelineRenderingType, {
                                 ...this.props,
 

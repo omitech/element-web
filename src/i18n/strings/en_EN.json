@@ -1262,7 +1262,8 @@
         "open_room": "Open room",
         "send_label": "Send",
         "sending": "Sending",
-        "sent": "Sent"
+    "sent": "Sent",
+        "forwarded_from_aria": "Forwarded message"
     },
     "identity_server": {
         "change": "Change identity server",
