@@ -178,6 +178,28 @@ const Entry: React.FC<IEntryProps<any>> = ({ room, type, content, matrixClient: 
     );
 };
 
+// Adds MSC1767 forwarded metadata to the content if not already present.
+// Spec reference (proposal): org.matrix.msc1767.forwarded
+// Structure:
+// "org.matrix.msc1767.forwarded": {
+//   "original_sender": string;          // mxid of original event sender
+//   "original_event_id": string;        // event id of the original event
+//   "original_room_id": string;         // room id where the original event resides
+//   "forwarded_ts": number;             // unix ms timestamp when the forwarding action occurred
+// }
+const addForwardMetadata = (content: IContent, event: MatrixEvent): IContent => {
+    if (content["org.matrix.msc1767.forwarded"]) return content; // already tagged (keep earliest origin)
+    return {
+        ...content,
+        "org.matrix.msc1767.forwarded": {
+            original_sender: event.getSender(),
+            original_event_id: event.getId(),
+            original_room_id: event.getRoomId(),
+            forwarded_ts: Date.now(),
+        },
+    };
+};
+
 const transformEvent = (event: MatrixEvent): { type: string; content: IContent } => {
     const {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -200,20 +222,23 @@ const transformEvent = (event: MatrixEvent): { type: string; content: IContent }
         const geoUri = locationEventGeoUri(event);
         return {
             type,
-            content: {
-                ...content,
-                ...ContentHelpers.makeLocationContent(
-                    undefined, // text
-                    geoUri,
-                    timestamp || Date.now(),
-                    undefined, // description
-                    LocationAssetType.Pin,
-                ),
-            },
+            content: addForwardMetadata(
+                {
+                    ...content,
+                    ...ContentHelpers.makeLocationContent(
+                        undefined, // text
+                        geoUri,
+                        timestamp || Date.now(),
+                        undefined, // description
+                        LocationAssetType.Pin,
+                    ),
+                },
+                event,
+            ),
         };
     }
 
-    return { type, content };
+    return { type, content: addForwardMetadata(content, event) };
 };
 
 const ForwardDialog: React.FC<IProps> = ({ matrixClient: cli, event, permalinkCreator, onFinished }) => {
