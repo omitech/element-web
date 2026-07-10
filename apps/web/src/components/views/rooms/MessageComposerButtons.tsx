@@ -85,13 +85,21 @@ const MessageComposerButtons: React.FC<IProps> = (props: IProps) => {
                     onClick={props.onComposerModeClick}
                 />
             ) : (
-                voiceRecordingButton(props, narrow)
+                emojiButton(props)
             ),
         ];
         moreButtons = [
-            emojiButton(props),
-            uploadButton(), // props passed via UploadButtonContext
-            showStickersButton(props),            
+            // This a textual list of buttons, so we can't use the UploadButton here.
+            roomUploadSnapshot.options.map(({ type, icon: Icon, label }) => (
+                <IconizedContextMenuOption
+                    onClick={() => roomUploadVM.onUploadOptionSelected(type)}
+                    icon={Icon && <Icon />}
+                    label={label}
+                    key={type}
+                />
+            )),
+            showStickersButton(props),
+            voiceRecordingButton(props, narrow),
             props.showPollsButton ? pollButton(room, props.relation) : null,
             showLocationButton(props, room, matrixClient),
         ];
@@ -109,8 +117,16 @@ const MessageComposerButtons: React.FC<IProps> = (props: IProps) => {
             voiceRecordingButton(props, narrow),
         ];
         moreButtons = [
-            showStickersButton(props),
-            uploadButton(), // props passed via UploadButtonContext            
+            // This a textual list of buttons, so we can't use the UploadButton here.
+            roomUploadSnapshot.options.map(({ type, icon: Icon, label }) => (
+                <IconizedContextMenuOption
+                    onClick={() => roomUploadVM.onUploadOptionSelected(type)}
+                    icon={Icon && <Icon />}
+                    label={label}
+                    key={type}
+                />
+            )),
+            showStickersButton(props),            
             props.showPollsButton ? pollButton(room, props.relation) : null,
             showLocationButton(props, room, matrixClient),
         ];
