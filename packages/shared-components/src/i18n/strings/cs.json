@@ -55,7 +55,6 @@
         "user_menu": {
             "create_an_account": "Vytvořit účet",
             "got_an_account": "Máte účet?",
-            "manage_account": "Spravovat účet",
             "sign_in": "Přihlásit se",
             "title": "Uživatelská nabídka"
         }
@@ -133,7 +132,9 @@
         "expand_all_sections": "Rozbalit všechny sekce",
         "expand_filters": "Rozbalit seznam filtrů",
         "filters": {
+            "favourite": "Oblíbené",
             "invites": "Pozvánky",
+            "low_priority": "Nízká priorita",
             "mentions": "Zmínky",
             "people": "Lidé",
             "rooms": "Místnosti",
@@ -257,8 +258,6 @@
         "pending_moderation": "Zpráva čeká na moderaci",
         "pending_moderation_reason": "Zpráva čeká na moderaci: %(reason)s",
         "url_preview": {
-            "close": "Zavřít náhled",
-            "open_link": "Otevřít odkaz",
             "show_n_more": {
                 "one": "Zobrazit %(count)s další náhled",
                 "few": "Zobrazit %(count)s další náhledy",

@@ -17,7 +17,7 @@ import defaultDispatcher from "../../dispatcher/dispatcher";
 import PosthogTrackers from "../../PosthogTrackers";
 import { Action } from "../../dispatcher/actions";
 import { getMetaSpaceName, type MetaSpace, UPDATE_HOME_BEHAVIOUR, UPDATE_SELECTED_SPACE } from "../../stores/spaces";
-import { type SpaceStoreClass } from "../../stores/spaces/SpaceStore";
+import type SpaceStore from "../../stores/spaces/SpaceStore";
 import {
     shouldShowSpaceSettings,
     showCreateNewRoom,
@@ -42,7 +42,7 @@ export interface Props {
     /**
      * The space store instance.
      */
-    spaceStore: SpaceStoreClass;
+    spaceStore: SpaceStore;
 }
 
 /**
@@ -155,7 +155,7 @@ export class RoomListHeaderViewModel
     };
 
     public createRoom = (e: Event): void => {
-        createRoom(this.activeSpace);
+        void createRoom(this.activeSpace);
         PosthogTrackers.trackInteraction("WebRoomListHeaderPlusMenuCreateRoomItem", e);
     };
 
@@ -164,7 +164,7 @@ export class RoomListHeaderViewModel
             ? RoomType.UnstableCall
             : RoomType.ElementVideo;
         if (this.activeSpace) {
-            showCreateNewRoom(this.activeSpace, type);
+            void showCreateNewRoom(this.activeSpace, type);
         } else {
             defaultDispatcher.dispatch({
                 action: Action.CreateRoom,
@@ -224,12 +224,12 @@ export class RoomListHeaderViewModel
         PosthogTrackers.trackInteraction("WebRoomListMessagePreviewToggle");
 
         const isMessagePreviewEnabled = !SettingsStore.getValue("RoomList.showMessagePreview");
-        SettingsStore.setValue("RoomList.showMessagePreview", null, SettingLevel.DEVICE, isMessagePreviewEnabled);
+        void SettingsStore.setValue("RoomList.showMessagePreview", null, SettingLevel.DEVICE, isMessagePreviewEnabled);
         this.snapshot.merge({ isMessagePreviewEnabled });
     };
 
     public createSection = (): void => {
-        RoomListStoreV3.instance.createSection();
+        void RoomListStoreV3.instance.createSection();
         PosthogTrackers.trackSectionCreation("RoomListHeader");
     };
 
@@ -254,7 +254,7 @@ export class RoomListHeaderViewModel
     };
 
     public closeSectionReleaseAnnouncement = (): void => {
-        ReleaseAnnouncementStore.instance.nextReleaseAnnouncement();
+        void ReleaseAnnouncementStore.instance.nextReleaseAnnouncement();
         this.snapshot.merge({ displaySectionReleaseAnnouncement: false });
     };
 
@@ -271,7 +271,7 @@ export class RoomListHeaderViewModel
  * @param matrixClient - The Matrix client instance.
  * @returns
  */
-function getInitialSnapshot(spaceStore: SpaceStoreClass, matrixClient: MatrixClient): RoomListHeaderViewSnapshot {
+function getInitialSnapshot(spaceStore: SpaceStore, matrixClient: MatrixClient): RoomListHeaderViewSnapshot {
     const sortingAlgorithm = SettingsStore.getValue("RoomList.preferredSorting");
 
     let activeSortOption: SortOption;
@@ -300,7 +300,7 @@ function getInitialSnapshot(spaceStore: SpaceStoreClass, matrixClient: MatrixCli
  * Get the header title based on the active space.
  * @param spaceStore - The space store instance.
  */
-function getHeaderTitle(spaceStore: SpaceStoreClass): string {
+function getHeaderTitle(spaceStore: SpaceStore): string {
     const activeSpace = spaceStore.activeSpaceRoom;
     const spaceName = activeSpace?.name;
     return spaceName ?? getMetaSpaceName(spaceStore.activeSpace as MetaSpace, spaceStore.allRoomsInHome);
@@ -321,7 +321,7 @@ function getCanCreateVideoRoom(canCreateRoom: boolean): boolean {
  * @returns The header space state containing title, permissions, and display flags.
  */
 function computeHeaderSpaceState(
-    spaceStore: SpaceStoreClass,
+    spaceStore: SpaceStore,
     matrixClient: MatrixClient,
 ): Omit<RoomListHeaderViewSnapshot, "activeSortOption" | "isMessagePreviewEnabled"> {
     const displaySectionReleaseAnnouncement =

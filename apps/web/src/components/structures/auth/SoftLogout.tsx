@@ -79,16 +79,16 @@ export default class SoftLogout extends React.Component<IProps, IState> {
             return;
         }
 
-        this.initLogin();
+        void this.initLogin();
     }
 
     private onClearAll = (): void => {
         const { finished } = Modal.createDialog(ConfirmWipeDeviceDialog);
-        finished.then(([wipeData]) => {
+        void finished.then(([wipeData]) => {
             if (!wipeData) return;
 
             logger.log("Clearing data from soft-logged-out session");
-            Lifecycle.logout();
+            return Lifecycle.logout();
         });
     };
 
@@ -108,7 +108,7 @@ export default class SoftLogout extends React.Component<IProps, IState> {
         const loginViews = flows.map((f) => STATIC_FLOWS_TO_VIEWS[f.type]);
 
         const isSocialSignOn = loginViews.includes(LoginView.Password) && loginViews.includes(LoginView.SSO);
-        const firstView = loginViews.filter((f) => !!f)[0] || LoginView.Unsupported;
+        const firstView = loginViews.find((f) => !!f) || LoginView.Unsupported;
         const chosenView = isSocialSignOn ? LoginView.PasswordWithSocialSignOn : firstView;
         this.setState({ flows, loginView: chosenView });
     }

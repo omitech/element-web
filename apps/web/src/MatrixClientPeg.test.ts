@@ -15,6 +15,8 @@ import fetchMock from "@fetch-mock/vitest";
 import { advanceDateAndTime, stubClient, createTestClient } from "test-utils";
 
 import { type IMatrixClientPeg, MatrixClientPeg as peg } from "./MatrixClientPeg";
+import SdkConfig from "./SdkConfig";
+import { createClientWithCreds } from "./utils/createMatrixClient";
 
 vi.useFakeTimers();
 
@@ -115,6 +117,80 @@ describe("MatrixClientPeg", () => {
 
             await testPeg.start();
             expect(mockInitRustCrypto).toHaveBeenCalledTimes(1);
+        });
+
+        it("should poll the client well-known by default", async () => {
+            vi.spyOn(testPeg.safeGet(), "initRustCrypto").mockResolvedValue(undefined);
+            const startClient = vi.spyOn(testPeg.safeGet(), "startClient").mockResolvedValue(undefined);
+
+            await testPeg.start();
+
+            const opts = startClient.mock.calls[0][0];
+            expect(opts?.clientWellKnownPollPeriod).toBe(2 * 60 * 60);
+        });
+
+        it("should not poll the client well-known when enable_client_well_known_lookups is false", async () => {
+            const sdkConfigGet = SdkConfig.get;
+            vi.spyOn(SdkConfig, "get").mockImplementation((key?: any, altCaseName?: string): any => {
+                if (key === "enable_client_well_known_lookups") return false;
+                return sdkConfigGet(key, altCaseName);
+            });
+            vi.spyOn(testPeg.safeGet(), "initRustCrypto").mockResolvedValue(undefined);
+            const startClient = vi.spyOn(testPeg.safeGet(), "startClient").mockResolvedValue(undefined);
+
+            await testPeg.start();
+
+            const opts = startClient.mock.calls[0][0];
+            expect(opts?.clientWellKnownPollPeriod).toBeUndefined();
+        });
+
+        describe("client well-known lookups", () => {
+            const WELL_KNOWN_URL = "https://example.com/.well-known/matrix/client";
+
+            beforeEach(() => {
+                // Use a real MatrixClient and really start it: these tests exist to observe what the SDK
+                // requests over the network, which mocking `startClient` (as above) cannot see. This is
+                // what caught matrix-js-sdk fetching the well-known despite `clientWellKnownPollPeriod`
+                // being unset.
+                testPeg = new PegClass();
+                testPeg.set(
+                    createClientWithCreds({
+                        homeserverUrl: "http://example.com",
+                        userId: "@user:example.com",
+                        deviceId: "DEVICE",
+                        accessToken: "token",
+                    }),
+                );
+                vi.spyOn(testPeg.safeGet(), "initRustCrypto").mockResolvedValue(undefined);
+            });
+
+            afterEach(() => {
+                testPeg.get()?.stopClient();
+                testPeg.unset();
+            });
+
+            async function requestedUrls(): Promise<string[]> {
+                await fetchMock.callHistory.flush();
+                return fetchMock.callHistory.calls().map((call) => call.url);
+            }
+
+            it("requests the client well-known on startup by default", async () => {
+                await testPeg.start();
+
+                expect(await requestedUrls()).toContain(WELL_KNOWN_URL);
+            });
+
+            it("never requests the client well-known when enable_client_well_known_lookups is false", async () => {
+                const sdkConfigGet = SdkConfig.get;
+                vi.spyOn(SdkConfig, "get").mockImplementation((key?: any, altCaseName?: string): any => {
+                    if (key === "enable_client_well_known_lookups") return false;
+                    return sdkConfigGet(key, altCaseName);
+                });
+
+                await testPeg.start();
+
+                expect(await requestedUrls()).not.toContainEqual(expect.stringContaining("/.well-known/matrix/"));
+            });
         });
     });
 });

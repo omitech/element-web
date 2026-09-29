@@ -56,7 +56,6 @@
             "clear_status": "Törlés",
             "create_an_account": "Fiók létrehozása",
             "got_an_account": "Van már fiókja?",
-            "manage_account": "Fiók kezelése",
             "sign_in": "Bejelentkezés",
             "title": "Felhasználói menü"
         }
@@ -148,7 +147,9 @@
         "expand_all_sections": "Az összes szakasz kibontása",
         "expand_filters": "Szűrőlista kibontása",
         "filters": {
+            "favourite": "Kedvencek",
             "invites": "Meghívók",
+            "low_priority": "Alacsony prioritás",
             "mentions": "Említések",
             "people": "Emberek",
             "rooms": "Szobák",
@@ -274,8 +275,6 @@
         "pending_moderation": "Moderálásra váró üzenet",
         "pending_moderation_reason": "Moderálásra váró üzenet: %(reason)s",
         "url_preview": {
-            "close": "Előnézet bezárása",
-            "open_link": "Hivatkozás megnyitása",
             "show_n_more": {
                 "one": "%(count)s további előnézet megjelenítése",
                 "other": "%(count)s további előnézet megjelenítése"

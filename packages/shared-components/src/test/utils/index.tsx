@@ -21,12 +21,16 @@ import {
     EventPresentationProvider,
     I18nApi,
     I18nContext,
+    LinkedTextContext,
     type EventPresentation,
 } from "../..";
 
 type SharedRenderOptions = RenderOptions & {
     presentation?: Partial<EventPresentation>;
 };
+
+const i18nApi = new I18nApi();
+const linkedTextConfiguration = {};
 
 const wrapWithTooltipProvider = (Wrapper: RenderOptions["wrapper"], presentation?: Partial<EventPresentation>) => {
     return ({ children }: { children: React.ReactNode }) => {
@@ -41,15 +45,13 @@ const wrapWithTooltipProvider = (Wrapper: RenderOptions["wrapper"], presentation
             <TooltipProvider>{children}</TooltipProvider>
         );
 
-        if (Wrapper) {
-            return (
-                <I18nContext.Provider value={new I18nApi()}>
-                    <Wrapper>{content}</Wrapper>
-                </I18nContext.Provider>
-            );
-        } else {
-            return <I18nContext.Provider value={new I18nApi()}>{content}</I18nContext.Provider>;
-        }
+        const wrapped = Wrapper ? <Wrapper>{content}</Wrapper> : content;
+
+        return (
+            <I18nContext.Provider value={i18nApi}>
+                <LinkedTextContext.Provider value={linkedTextConfiguration}>{wrapped}</LinkedTextContext.Provider>
+            </I18nContext.Provider>
+        );
     };
 };
 
@@ -59,7 +61,7 @@ const customRender = (ui: ReactElement, options: SharedRenderOptions = {}): Retu
     return render(ui, {
         ...renderOptions,
         wrapper: wrapWithTooltipProvider(wrapper, presentation) as RenderOptions["wrapper"],
-    }) as ReturnType<typeof render>;
+    });
 };
 
 // eslint-disable-next-line no-restricted-imports

@@ -9,7 +9,7 @@ Please see LICENSE files in the repository root for full details.
 // eslint-disable-next-line no-restricted-imports
 import "matrix-js-sdk/src/@types/global"; // load matrix-js-sdk's type extensions first
 
-import type { ModuleLoader } from "@element-hq/element-web-module-api";
+import type { ModuleLoader, X509Api } from "@element-hq/element-web-module-api";
 import type { logger } from "matrix-js-sdk/src/logger";
 import type ContentMessages from "../ContentMessages";
 import { type IMatrixClientPeg } from "../MatrixClientPeg";
@@ -19,13 +19,8 @@ import { type PlatformPeg } from "../PlatformPeg";
 import { type IntegrationManagers } from "../integrations/IntegrationManagers";
 import { type ModalManager } from "../Modal";
 import type SettingsStore from "../settings/SettingsStore";
-import type RightPanelStore from "../stores/right-panel/RightPanelStore";
-import type WidgetStore from "../stores/WidgetStore";
 import type UserActivity from "../UserActivity";
 import { type ModalWidgetStore } from "../stores/ModalWidgetStore";
-import { type WidgetLayoutStore } from "../stores/widgets/WidgetLayoutStore";
-import { type SpaceStoreClass } from "../stores/spaces/SpaceStore";
-import type TypingStore from "../stores/TypingStore";
 import { type EventIndexPeg } from "../indexing/EventIndexPeg";
 import { type VoiceRecordingStore } from "../stores/VoiceRecordingStore";
 import type PerformanceMonitor from "../performance";
@@ -34,6 +29,7 @@ import { type SetupEncryptionStore } from "../stores/SetupEncryptionStore";
 import { type RoomScrollStateStore } from "../stores/RoomScrollStateStore";
 import { type ConsoleLogger, type IndexedDBLogStore } from "../rageshake/rageshake";
 import type ActiveWidgetStore from "../stores/ActiveWidgetStore";
+import type { CallStatusListener } from "../CallStatusListener";
 import { type IConfigOptions } from "../IConfigOptions";
 import { type MatrixDispatcher } from "../dispatcher/dispatcher";
 import { type DeepReadonly } from "./common";
@@ -41,8 +37,7 @@ import type MatrixChat from "../components/structures/MatrixChat";
 import { type InitialCryptoSetupStore } from "../stores/InitialCryptoSetupStore";
 import { type ModuleApiType } from "../modules/Api.ts";
 import type { RoomListStoreV3Class } from "../stores/room-list-v3/RoomListStoreV3.ts";
-
-/* eslint-disable @typescript-eslint/naming-convention */
+import { type SDKContextClass } from "../contexts/SDKContextClass.ts";
 
 type ElectronChannel =
     | "app_onAction"
@@ -70,8 +65,8 @@ declare global {
     // so we don't accidentally use the methods on NodeJS.Timeout - they only exist in a subset of environments.
     // The overload for clear{Interval,Timeout} is resolved as expected.
     // We use `ReturnType<typeof setTimeout>` in the code to be agnostic of if this definition gets loaded.
-    function setInterval(handler: TimerHandler, timeout: number, ...arguments: any[]): number;
-    function setTimeout(handler: TimerHandler, timeout: number, ...arguments: any[]): number;
+    function setInterval(handler: TimerHandler, timeout: number, ...args: any[]): number;
+    function setTimeout(handler: TimerHandler, timeout: number, ...args: any[]): number;
 
     interface Window {
         mxSendRageshake: (text: string, withLogs?: boolean) => Promise<void>;
@@ -90,19 +85,15 @@ declare global {
         mxContentMessages: ContentMessages;
         mxToastStore: ToastStore;
         mxDeviceListener: DeviceListener;
+        mxCallStatusListener: CallStatusListener;
         getRoomListStoreV3: () => RoomListStoreV3Class;
         mxPlatformPeg: PlatformPeg;
         mxIntegrationManagers: typeof IntegrationManagers;
         singletonModalManager: ModalManager;
         mxSettingsStore: SettingsStore;
-        mxRightPanelStore: RightPanelStore;
-        mxWidgetStore: WidgetStore;
-        mxWidgetLayoutStore: WidgetLayoutStore;
         mxUserActivity: UserActivity;
         mxModalWidgetStore: ModalWidgetStore;
-        mxSpaceStore: SpaceStoreClass;
         mxVoiceRecordingStore: VoiceRecordingStore;
-        mxTypingStore: TypingStore;
         mxEventIndexPeg: EventIndexPeg;
         mxPerformanceMonitor: PerformanceMonitor;
         mxPerformanceEntryNames: any;
@@ -114,6 +105,7 @@ declare global {
         mxOnRecaptchaLoaded?: () => void;
         mxModuleLoader: ModuleLoader;
         mxModuleApi: ModuleApiType;
+        mxSdkContext: SDKContextClass;
 
         // electron-only
         electron?: Electron;
@@ -139,6 +131,8 @@ declare global {
         // Settings
         setSettingValue(settingName: string, value: any): Promise<void>;
         getSettingValue(settingName: string): Promise<any>;
+        // X.509 hardware key IPC
+        x509?: X509Api;
     }
 
     interface DesktopCapturerSource {
@@ -185,7 +179,6 @@ declare global {
         },
     ): void;
 
-    // eslint-disable-next-line no-var
     var grecaptcha:
         | undefined
         | {
@@ -200,14 +193,8 @@ declare global {
               isReady: () => boolean;
           };
 
-    // eslint-disable-next-line no-var, camelcase
     var mx_rage_logger: ConsoleLogger;
-    // eslint-disable-next-line no-var, camelcase
     var mx_rage_initPromise: Promise<void>;
-    // eslint-disable-next-line no-var, camelcase
     var mx_rage_initStoragePromise: Promise<void>;
-    // eslint-disable-next-line no-var, camelcase
     var mx_rage_store: IndexedDBLogStore;
 }
-
-/* eslint-enable @typescript-eslint/naming-convention */

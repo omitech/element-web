@@ -608,7 +608,7 @@ export const Commands = [
 
                     return success(
                         finished.then(([confirmed]) => {
-                            if (confirmed) manuallyVerifyDevice(cli, deviceId, fingerprint);
+                            if (confirmed) void manuallyVerifyDevice(cli, deviceId, fingerprint);
                         }),
                     );
                 }
@@ -624,7 +624,7 @@ export const Commands = [
         isEnabled: (cli) => !isCurrentLocalRoom(cli),
         runFn: function (cli, roomId) {
             try {
-                cli.getCrypto()?.forceDiscardSession(roomId);
+                void cli.getCrypto()?.forceDiscardSession(roomId);
             } catch (e) {
                 return reject(e instanceof Error ? e.message : e);
             }
@@ -705,7 +705,10 @@ export const Commands = [
             // easter-egg for now: look up phone numbers through the thirdparty API
             // (very dumb phone number detection...)
             const isPhoneNumber = userId && /^\+?[0123456789]+$/.test(userId);
-            if (!userId || ((!userId.startsWith("@") || !userId.includes(":")) && !isPhoneNumber)) {
+            // Validate with the same helper createRoom() uses to decide whether to send an invite. A looser
+            // check here lets an argument such as "@alice:example.com hello" be written to m.direct as a user
+            // ID that is then never invited, leaving an empty DM behind.
+            if (!userId || (getAddressType(userId) !== AddressType.MatrixUserId && !isPhoneNumber)) {
                 return reject(this.getUsage());
             }
 
@@ -755,7 +758,7 @@ export const Commands = [
                                     metricsViaKeyboard: true,
                                 });
                                 if (msg) {
-                                    cli.sendTextMessage(roomId, msg);
+                                    void cli.sendTextMessage(roomId, msg);
                                 }
                             })(),
                         );
@@ -896,7 +899,7 @@ interface ICmd {
  * Process the given text for /commands and returns a parsed command that can be used for running the operation.
  * @param {string} roomId The room ID where the command was issued.
  * @param {string} input The raw text input by the user.
- * @return {ICmd} The parsed command object.
+ * @returns {ICmd} The parsed command object.
  * Returns an empty object if the input didn't match a command.
  */
 export function getCommand(roomId: string, input: string): ICmd {
